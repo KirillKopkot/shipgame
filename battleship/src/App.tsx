@@ -1,122 +1,99 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { loadSavedGame, loadSettings, saveSettings } from './game/storage'
+import type { Settings } from './game/storage'
+import type { Difficulty } from './game/types'
+import { DifficultyScreen } from './screens/DifficultyScreen'
+import { HomeScreen } from './screens/HomeScreen'
+import { MultiplayerScreen } from './screens/MultiplayerScreen'
+import { PlaceholderScreen } from './screens/PlaceholderScreen'
+import { SettingsScreen } from './screens/SettingsScreen'
+import { SignInScreen } from './screens/SignInScreen'
+import { StartScreen } from './screens/StartScreen'
+
+export type Screen =
+  | 'start'
+  | 'home'
+  | 'difficulty'
+  | 'placement'
+  | 'game'
+  | 'result'
+  | 'settings'
+  | 'multiplayer'
+  | 'signin'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [screen, setScreen] = useState<Screen>('start')
+  // Screens we can go back to (top = previous screen).
+  const [history, setHistory] = useState<Screen[]>([])
+  const [isGuest, setIsGuest] = useState(true)
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium')
+  const [settings, setSettings] = useState<Settings>(loadSettings)
+  const [savedGame] = useState(loadSavedGame)
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  function go(next: Screen) {
+    setHistory((h) => [...h, screen])
+    setScreen(next)
+  }
 
-      <div className="ticks"></div>
+  /** Moves to a screen without keeping the current one in history (e.g. after leaving Start). */
+  function replace(next: Screen) {
+    setScreen(next)
+  }
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  function back() {
+    const previous = history[history.length - 1] ?? 'home'
+    setHistory((h) => h.slice(0, -1))
+    setScreen(previous)
+  }
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  function playAsGuest() {
+    setIsGuest(true)
+    setHistory([])
+    replace('home')
+  }
+
+  function changeSettings(next: Settings) {
+    setSettings(next)
+    saveSettings(next)
+  }
+
+  switch (screen) {
+    case 'start':
+      return <StartScreen onGuest={playAsGuest} onSignIn={() => go('signin')} />
+    case 'signin':
+      return <SignInScreen onBack={back} onGuest={playAsGuest} />
+    case 'home':
+      return (
+        <HomeScreen
+          isGuest={isGuest}
+          savedGame={savedGame}
+          onContinue={() => go('game')}
+          onSinglePlayer={() => go('difficulty')}
+          onMultiplayer={() => go('multiplayer')}
+          onSettings={() => go('settings')}
+        />
+      )
+    case 'difficulty':
+      return (
+        <DifficultyScreen
+          onBack={back}
+          onSelect={(d) => {
+            setDifficulty(d)
+            go('placement')
+          }}
+        />
+      )
+    case 'settings':
+      return <SettingsScreen settings={settings} onChange={changeSettings} onBack={back} />
+    case 'multiplayer':
+      return <MultiplayerScreen onBack={back} />
+    case 'placement':
+      return <PlaceholderScreen title={`Placement · ${difficulty}`} onBack={back} />
+    case 'game':
+      return <PlaceholderScreen title="Game" onBack={back} />
+    case 'result':
+      return <PlaceholderScreen title="Result" onBack={back} />
+  }
 }
 
 export default App

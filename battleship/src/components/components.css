@@ -1,0 +1,50 @@
+/* Layout helpers on top of the design system (variables.css). Mobile-first. */
+
+.ui-block {
+  width: 100%;
+}
+
+button.bs-card.ui-card--action {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.bs-menu-row {
+  width: 100%;
+  font-size: var(--bs-text-xl);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bs-board {
+  aspect-ratio: 1;
+}
+
+.ui-board-grid {
+  width: 100%;
+}
+
+.ui-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--bs-space-4);
+  min-height: var(--bs-tap);
+}
+
+.ui-topbar__title {
+  flex: 1;
+}
+
+.ui-topbar__right {
+  margin-left: auto;
+}
+
+.start-hero {
+  display: block;
+  width: 100%;
+  max-width: 358px;
+  height: auto;
+  overflow: visible;
+}
