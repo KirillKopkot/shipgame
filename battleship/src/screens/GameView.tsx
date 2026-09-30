@@ -80,7 +80,7 @@ function GameClock(props: Pick<GameViewProps, 'turnNumber' | 'startedAt' | 'fini
 
 /** The match screen for both modes: the caller supplies the data and what firing does. */
 export function GameView(props: GameViewProps) {
-  const { enemyCells, myCells, enemyFleet, myFleet, stats, canFire } = props
+  const { enemyCells, myCells, enemyFleet, stats, canFire } = props
   const [aim, setAim] = useState<Point | null>(null)
   // Shots that existed when the view opened (a resumed match) do not animate again.
   const [initialShots] = useState(props.shotCount)
@@ -155,11 +155,6 @@ export function GameView(props: GameViewProps) {
 
       <div className="game__body">
         <section className="game__enemy">
-          <div className="game__head">
-            <h2 className="game__title">Enemy waters</h2>
-            <FleetPips ships={enemyFleet.ships} />
-            <span className="game__left">{enemyFleet.left} left</span>
-          </div>
           <Board
             cells={enemyCells}
             target={canFire ? aim : null}
@@ -176,10 +171,10 @@ export function GameView(props: GameViewProps) {
               <Board cells={myCells} fresh={freshFor('enemy')} small />
             </div>
             <div className="game__mine-info">
-              <h2 className="game__title">Your fleet</h2>
-              <FleetPips ships={myFleet.ships} />
+              <h2 className="game__title">Enemy fleet</h2>
+              <FleetPips ships={enemyFleet.ships} />
               <p className="game__meta">
-                {myFleet.left} left · {stats.shots} shots
+                {enemyFleet.left} left · {stats.shots} shots
               </p>
               <ul className="game__legend">
                 <li>
@@ -206,9 +201,9 @@ export function GameView(props: GameViewProps) {
 
           <div className="game__mine-desk">
             <div className="game__head">
-              <h2 className="game__title">Your fleet</h2>
-              <FleetPips ships={myFleet.ships} />
-              <span className="game__left">{myFleet.left} left</span>
+              <h2 className="game__title">Enemy fleet</h2>
+              <FleetPips ships={enemyFleet.ships} />
+              <span className="game__left">{enemyFleet.left} left</span>
             </div>
             <Board cells={myCells} fresh={freshFor('enemy')} />
             <div className="game__stats">
