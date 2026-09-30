@@ -3,14 +3,17 @@ import { Card } from '../components/Card'
 import { ScreenHeader } from '../components/ScreenHeader'
 import { Toggle } from '../components/Toggle'
 import type { Settings } from '../game/storage'
+import type { ProState } from '../pro/storage'
 
 interface SettingsScreenProps {
   settings: Settings
+  pro: ProState
+  onProChange: (next: ProState) => void
   onChange: (settings: Settings) => void
   onBack: () => void
 }
 
-export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps) {
+export function SettingsScreen({ settings, pro, onProChange, onChange, onBack }: SettingsScreenProps) {
   return (
     <main className="bs-screen screen">
       <ScreenHeader title="Preferences" onBack={onBack} />
@@ -39,6 +42,22 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               label="Sound"
               checked={settings.sound}
               onChange={(sound) => onChange({ ...settings, sound })}
+            />
+          </div>
+        </Card>
+        <Card>
+          <div className="setting">
+            <div>
+              <h2 className="setting__name">
+                New theme {!pro.active && <span className="bs-chip bs-chip--accent">Pro</span>}
+              </h2>
+              <p className="bs-body">{pro.active ? 'Midnight gold ships and board' : 'Unlock with Salvo Pro'}</p>
+            </div>
+            <Toggle
+              label="New theme"
+              checked={pro.active && pro.theme}
+              disabled={!pro.active}
+              onChange={(theme) => onProChange({ ...pro, theme })}
             />
           </div>
         </Card>

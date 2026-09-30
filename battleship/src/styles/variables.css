@@ -84,7 +84,7 @@ button{font:inherit;color:inherit}
 /* ---- Screen shell: sky, clouds, sea ---- */
 .bs-screen{
   position:relative;overflow:hidden;display:flex;flex-direction:column;isolation:isolate;
-  background:linear-gradient(#7CCBF3,#B9E8FB);
+  background:linear-gradient(var(--bs-color-sky),var(--bs-color-sky-light));
   color:var(--bs-color-text);font-family:var(--bs-font-body);font-weight:600;
 }
 .bs-screen::before{

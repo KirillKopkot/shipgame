@@ -609,3 +609,16 @@
   color: var(--bs-color-ink);
   user-select: all;
 }
+
+/* ---- Salvo Pro button (Home) ---- */
+button.bs-menu-row.home__pro {
+  background: var(--bs-color-yellow);
+}
+
+button.bs-menu-row.home__pro .bs-chip {
+  margin-left: auto;
+}
+
+button.bs-menu-row.home__pro .bs-chip + svg {
+  margin-left: 0;
+}

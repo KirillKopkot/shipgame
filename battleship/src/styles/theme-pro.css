@@ -1,0 +1,17 @@
+/* Salvo Pro theme "Midnight gold": colour variables only. Sky stays light so the dark text keeps its contrast. */
+[data-theme="pro"] {
+  --bs-color-bg: #f3dfae;
+  --bs-color-sky: #f0d28a;
+  --bs-color-sky-light: #fbefcf;
+  --bs-color-sea: #1b2f5b;
+  --bs-color-surface-raised: #ffe8a3;
+  --bs-color-water: #1f3a70;
+  --bs-color-water-deep: #142850;
+  --bs-color-ship: #ffc93c;
+  --bs-color-sunk: #ffd24a;
+  --bs-color-sunk-bg: #0b1633;
+  --bs-color-green: #f2b632;
+  --bs-color-accent: #f2b632;
+  --bs-color-accent-deep: #8a5a00;
+  --bs-color-accent-soft: rgba(242, 182, 50, 0.3);
+}

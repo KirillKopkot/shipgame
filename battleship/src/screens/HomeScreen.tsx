@@ -1,12 +1,17 @@
+import { useState } from 'react'
 import { Board } from '../components/Board'
 import { boardToCells } from '../components/cellView'
 import { Card } from '../components/Card'
-import { ChevronIcon, LogoMark, PeopleIcon, SunIcon, TargetIcon } from '../components/Icons'
+import { ChevronIcon, LogoMark, PeopleIcon, StarIcon, SunIcon, TargetIcon } from '../components/Icons'
 import type { GameState } from '../game/types'
+import type { ProState } from '../pro/storage'
+import { ProModal } from './ProModal'
 
 interface HomeScreenProps {
   isGuest: boolean
   savedGame: GameState | null
+  pro: ProState
+  onProChange: (next: ProState) => void
   onContinue: () => void
   onSinglePlayer: () => void
   onMultiplayer: () => void
@@ -20,11 +25,15 @@ function capitalize(word: string): string {
 export function HomeScreen({
   isGuest,
   savedGame,
+  pro,
+  onProChange,
   onContinue,
   onSinglePlayer,
   onMultiplayer,
   onSettings,
 }: HomeScreenProps) {
+  const [proOpen, setProOpen] = useState(false)
+
   return (
     <main className="bs-screen screen">
       <header className="home__header">
@@ -66,12 +75,19 @@ export function HomeScreen({
           <span>Multiplayer</span>
           <ChevronIcon />
         </button>
+        <button type="button" className="bs-menu-row home__pro" onClick={() => setProOpen(true)}>
+          <StarIcon />
+          <span>Salvo Pro</span>
+          {pro.active && <span className="bs-chip">Active</span>}
+          <ChevronIcon />
+        </button>
         <button type="button" className="bs-menu-row" onClick={onSettings}>
           <SunIcon />
           <span>Settings</span>
           <ChevronIcon />
         </button>
       </nav>
+      {proOpen && <ProModal pro={pro} onChange={onProChange} onClose={() => setProOpen(false)} />}
     </main>
   )
 }

@@ -3,6 +3,9 @@ import { createGame, shotStats } from './game/match'
 import { loadSavedGame, loadSettings, saveGame, saveSettings } from './game/storage'
 import type { Settings } from './game/storage'
 import type { Difficulty, GameState } from './game/types'
+import { isThemeOn, loadProState, saveProState } from './pro/storage'
+import type { ProState } from './pro/storage'
+import { applyTheme } from './pro/theme'
 import { parseRoomParam } from './multiplayer/roomCode'
 import { clearRoomCode, loadRoomCode } from './multiplayer/roomStorage'
 import { DifficultyScreen } from './screens/DifficultyScreen'
@@ -52,6 +55,7 @@ function App() {
   const [isGuest, setIsGuest] = useState(true)
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [settings, setSettings] = useState<Settings>(loadSettings)
+  const [pro, setPro] = useState<ProState>(loadProState)
   // The current match: restored from localStorage, kept there while it is in progress.
   const [game, setGame] = useState<GameState | null>(loadSavedGame)
 
@@ -107,6 +111,12 @@ function App() {
     saveSettings(next)
   }
 
+  function changePro(next: ProState) {
+    setPro(next)
+    saveProState(next)
+    applyTheme(isThemeOn(next))
+  }
+
   function rematch() {
     if (!game) return goHome()
     setDifficulty(game.difficulty)
@@ -127,6 +137,8 @@ function App() {
         <HomeScreen
           isGuest={isGuest}
           savedGame={game?.phase === 'playing' ? game : null}
+          pro={pro}
+          onProChange={changePro}
           onContinue={() => go('game')}
           onSinglePlayer={() => go('difficulty')}
           onMultiplayer={() => go('multiplayer')}
@@ -144,7 +156,7 @@ function App() {
         />
       )
     case 'settings':
-      return <SettingsScreen settings={settings} onChange={changeSettings} onBack={back} />
+      return <SettingsScreen settings={settings} pro={pro} onProChange={changePro} onChange={changeSettings} onBack={back} />
     case 'multiplayer':
       return <MultiplayerScreen onBack={back} onEnterRoom={enterRoom} />
     case 'room':

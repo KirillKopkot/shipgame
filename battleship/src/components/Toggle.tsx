@@ -1,10 +1,11 @@
 interface ToggleProps {
   checked: boolean
   label: string
+  disabled?: boolean
   onChange: (checked: boolean) => void
 }
 
-export function Toggle({ checked, label, onChange }: ToggleProps) {
+export function Toggle({ checked, label, disabled = false, onChange }: ToggleProps) {
   return (
     <button
       type="button"
@@ -12,6 +13,7 @@ export function Toggle({ checked, label, onChange }: ToggleProps) {
       className="bs-toggle"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
     />
   )

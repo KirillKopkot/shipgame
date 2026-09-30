@@ -67,6 +67,14 @@ export function SunIcon(props: IconProps) {
   )
 }
 
+export function StarIcon(props: IconProps) {
+  return (
+    <Icon stroke="var(--bs-color-ink)" fill="var(--bs-color-surface)" strokeWidth="2.6" {...props}>
+      <path d="m14 3 3.3 6.8 7.4 1-5.4 5.2 1.3 7.4L14 19.8l-6.6 3.6 1.3-7.4-5.4-5.2 7.4-1z" />
+    </Icon>
+  )
+}
+
 /** Small round mascot used as the Salvo logo mark. */
 export function LogoMark({ size = 48 }: { size?: number }) {
   return (
