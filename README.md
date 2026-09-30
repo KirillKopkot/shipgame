@@ -128,6 +128,29 @@ battleship/
 - Fonts from Google Fonts: Lilita One and Nunito.
 - UI components are written in this project; no UI component library is used.
 
+## Monetization (demo)
+
+**Status:** only a demo of a paid plan. There are no real payments: no payment provider, no card fields and no server-side check. The UI marks it as "Demo mode: no real payment".
+![img.png](battleship/src/assets/img4.png)
+**What is implemented ("Salvo Pro"):**
+
+- A yellow **Salvo Pro** button on the main screen, under Multiplayer, opens a modal (close with the cross, a tap on the backdrop or Esc).
+- The modal lists the benefits: "New ship and board theme" and "Extended stats (coming soon)". The extended stats are not built.
+- **Activate Pro (demo)** only sets a flag. After that the modal says "You now have access to the new theme". If Pro is already active, it shows "Pro is active" and **Deactivate (demo)**.
+- In Settings, the **New theme** toggle is disabled and labelled "Pro" until Pro is active. Once active, it turns the theme on and off.
+- The premium theme "midnight gold" is in `battleship/src/styles/theme-pro.css`. It overrides only colour variables and is enabled with `data-theme="pro"` on `<html>`; it is applied at startup.
+- The state is stored in `localStorage` under `battleship:pro` (`version`, `active`, `theme`); an invalid value is reset. The logic is in `battleship/src/pro/storage.ts` and is covered by tests.
+
+Because it is only a local flag, anyone can switch it on in the browser DevTools, and it is not tied to an account or synced between devices.
+
+**Possible monetization (ideas, not implemented):**
+
+- A one-time purchase or a subscription for cosmetics: themes and ship/board skins.
+- Extended stats and match history, which need accounts.
+- No paywall on gameplay or multiplayer.
+
+A real version would need accounts (the current sign-in screen is a placeholder), a payment provider, and a server-side entitlement check (for example a Supabase table written by a payment webhook and protected by RLS) instead of a local flag.
+
 ## Known limitations
 
 - Accounts are not implemented. The "Sign in / Create account" screen is a non-functional placeholder ("Coming soon"); only guest play exists. Multiplayer uses an anonymous session.
