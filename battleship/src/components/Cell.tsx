@@ -24,14 +24,18 @@ interface CellProps {
   /** Play the appear animation (a fresh shot). */
   isNew?: boolean
   label?: string
+  /** Position on the board, exposed as data attributes for pointer hit-testing. */
+  coords?: { x: number; y: number }
   onClick?: () => void
 }
 
-export function Cell({ state, target, isNew, label, onClick }: CellProps) {
+export function Cell({ state, target, isNew, label, coords, onClick }: CellProps) {
   const classes = ['bs-cell', CLASS_BY_STATE[state], target && 'is-target', isNew && 'is-new']
     .filter(Boolean)
     .join(' ')
 
-  if (!onClick) return <span className={classes} aria-label={label} />
-  return <button type="button" className={classes} aria-label={label} onClick={onClick} />
+  const data = coords ? { 'data-x': coords.x, 'data-y': coords.y } : {}
+
+  if (!onClick) return <span className={classes} aria-label={label} {...data} />
+  return <button type="button" className={classes} aria-label={label} onClick={onClick} {...data} />
 }

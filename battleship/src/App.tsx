@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { loadSavedGame, loadSettings, saveSettings } from './game/storage'
 import type { Settings } from './game/storage'
-import type { Difficulty } from './game/types'
+import type { Board, Difficulty } from './game/types'
 import { DifficultyScreen } from './screens/DifficultyScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { MultiplayerScreen } from './screens/MultiplayerScreen'
 import { PlaceholderScreen } from './screens/PlaceholderScreen'
+import { PlacementScreen } from './screens/PlacementScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SignInScreen } from './screens/SignInScreen'
 import { StartScreen } from './screens/StartScreen'
@@ -29,6 +30,8 @@ function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const [savedGame] = useState(loadSavedGame)
+  // The player's placed fleet, set by "Battle!" and read by the game screen.
+  const [playerFleet, setPlayerFleet] = useState<Board | null>(null)
 
   function go(next: Screen) {
     setHistory((h) => [...h, screen])
@@ -88,9 +91,24 @@ function App() {
     case 'multiplayer':
       return <MultiplayerScreen onBack={back} />
     case 'placement':
-      return <PlaceholderScreen title={`Placement · ${difficulty}`} onBack={back} />
+      return (
+        <PlacementScreen
+          difficulty={difficulty}
+          onBack={back}
+          onSettings={() => go('settings')}
+          onBattle={(fleet) => {
+            setPlayerFleet(fleet)
+            go('game')
+          }}
+        />
+      )
     case 'game':
-      return <PlaceholderScreen title="Game" onBack={back} />
+      return (
+        <PlaceholderScreen
+          title={`Game · ${playerFleet?.ships.length ?? 0} ships placed`}
+          onBack={back}
+        />
+      )
     case 'result':
       return <PlaceholderScreen title="Result" onBack={back} />
   }

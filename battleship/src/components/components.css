@@ -48,3 +48,32 @@ button.bs-menu-row {
   height: auto;
   overflow: visible;
 }
+
+/* Touch: keep pointer events flowing while a finger moves over the board. */
+.ui-board--touch {
+  touch-action: none;
+  user-select: none;
+}
+
+.ui-touch-only,
+.ui-mouse-only {
+  font-weight: inherit;
+}
+
+.ui-touch-only {
+  display: inline;
+}
+
+.ui-mouse-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .ui-touch-only {
+    display: none;
+  }
+
+  .ui-mouse-only {
+    display: inline;
+  }
+}

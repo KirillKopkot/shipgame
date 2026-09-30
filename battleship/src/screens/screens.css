@@ -213,6 +213,56 @@
   margin-top: var(--bs-space-2);
 }
 
+/* ---- Placement ---- */
+.placement__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--bs-space-4);
+}
+
+.placement__title {
+  flex: 1;
+}
+
+.placement__desk-bar,
+.placement__step,
+.placement__desk-title {
+  display: none;
+}
+
+.placement__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-3);
+}
+
+.placement__ships {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bs-space-3);
+}
+
+.placement__ships .bs-ship__row {
+  flex-wrap: wrap;
+}
+
+.placement__ships .bs-ship__count {
+  white-space: nowrap;
+}
+
+.placement__tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bs-space-3);
+  margin-top: auto;
+}
+
+.placement__tools .bs-btn {
+  padding-inline: var(--bs-space-2);
+  font-size: var(--bs-text-lg);
+}
+
 @media (min-width: 375px) {
   .start__title {
     font-size: var(--bs-text-4xl);
@@ -222,5 +272,79 @@
 @media (min-width: 768px) {
   .screen {
     padding-block: var(--bs-space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .placement {
+    padding-inline: var(--bs-space-6);
+  }
+
+  .placement__bar {
+    display: none;
+  }
+
+  .placement__desk-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--bs-space-3);
+  }
+
+  .placement__desk-chip {
+    margin-left: auto;
+  }
+
+  .placement__body {
+    display: grid;
+    grid-template-columns: minmax(0, 640px) minmax(0, 448px);
+    grid-template-areas:
+      'board step'
+      'board title'
+      'board hint'
+      'board ships'
+      'board tools'
+      'board battle';
+    grid-template-rows: repeat(6, auto);
+    align-content: start;
+    justify-content: center;
+    column-gap: var(--bs-space-7);
+    row-gap: var(--bs-space-4);
+  }
+
+  .placement__board {
+    grid-area: board;
+  }
+
+  .placement__step {
+    display: block;
+    grid-area: step;
+  }
+
+  .placement__desk-title {
+    display: block;
+    grid-area: title;
+    margin: 0;
+    font-family: var(--bs-font-display);
+    font-weight: 400;
+    font-size: var(--bs-text-3xl);
+    line-height: 1;
+  }
+
+  .placement__hint {
+    grid-area: hint;
+  }
+
+  .placement__ships {
+    grid-area: ships;
+    grid-template-columns: 1fr;
+  }
+
+  .placement__tools {
+    grid-area: tools;
+    margin-top: 0;
+  }
+
+  .placement__battle {
+    grid-area: battle;
   }
 }
