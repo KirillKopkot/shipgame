@@ -263,6 +263,149 @@
   font-size: var(--bs-text-lg);
 }
 
+/* ---- Game ---- */
+.game__desk-bar,
+.game__fire--desk,
+.game__mine-desk {
+  display: none;
+}
+
+.game__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-4);
+}
+
+.game__enemy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-2);
+}
+
+.game__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bs-space-1) var(--bs-space-3);
+}
+
+.game__title {
+  margin: 0;
+  font-family: var(--bs-font-display);
+  font-weight: 400;
+  font-size: var(--bs-text-lg);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.game__left {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: var(--bs-text-sm);
+  font-weight: 900;
+  color: var(--bs-color-text-muted);
+}
+
+.game__mine-mobile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bs-space-4);
+}
+
+.game__mine-board {
+  flex: 0 0 40%;
+}
+
+.game__mine-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-2);
+  min-width: 0;
+}
+
+.game__meta {
+  margin: 0;
+  font-size: var(--bs-text-sm);
+  font-weight: 800;
+  color: var(--bs-color-text-muted);
+}
+
+.game__legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bs-space-2);
+  margin: var(--bs-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--bs-text-md);
+  font-weight: 700;
+}
+
+.game__legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--bs-space-3);
+}
+
+.game__swatch {
+  display: block;
+  flex: none;
+  width: var(--bs-space-5);
+  height: var(--bs-space-5);
+}
+
+.game__swatch .bs-cell {
+  width: 100%;
+  height: 100%;
+}
+
+.game__fire {
+  margin-top: auto;
+}
+
+/* ---- Result ---- */
+.result__hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bs-space-3);
+  text-align: center;
+}
+
+.result__eyebrow {
+  margin-top: var(--bs-space-4);
+}
+
+.result__title {
+  font-size: var(--bs-text-3xl);
+}
+
+.result__title--win {
+  color: var(--bs-color-yellow);
+}
+
+.result__title--lose {
+  color: var(--bs-color-warn);
+}
+
+.result__text {
+  color: var(--bs-color-text);
+  max-width: 320px;
+}
+
+.result__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bs-space-3);
+}
+
+.result__actions {
+  margin-top: 0;
+}
+
 @media (min-width: 375px) {
   .start__title {
     font-size: var(--bs-text-4xl);
@@ -346,5 +489,92 @@
 
   .placement__battle {
     grid-area: battle;
+  }
+}
+
+@media (min-width: 1024px) {
+  .game {
+    padding-inline: var(--bs-space-6);
+  }
+
+  .game__bar,
+  .game__mobile-turn,
+  .game__mine-mobile,
+  .game__fire--mobile {
+    display: none;
+  }
+
+  .game__desk-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--bs-space-3);
+  }
+
+  .game__title {
+    font-size: var(--bs-text-xl);
+  }
+
+  .game__desk-turn {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .game__clock {
+    font-size: var(--bs-text-md);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--bs-color-text-muted);
+  }
+
+  .game__body {
+    display: grid;
+    grid-template-columns: minmax(0, 640px) minmax(0, 520px);
+    justify-content: center;
+    align-content: start;
+    align-items: start;
+    column-gap: var(--bs-space-7);
+  }
+
+  .game__fire--desk {
+    display: block;
+    margin-top: var(--bs-space-2);
+  }
+
+  .game__mine-desk {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bs-space-3);
+  }
+
+  .game__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--bs-space-3);
+  }
+
+  .game__log {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bs-space-2);
+    margin: 0;
+    padding: var(--bs-space-3) var(--bs-space-4);
+    list-style: none;
+    font-size: var(--bs-text-sm);
+    font-weight: 800;
+  }
+
+  .game__log li {
+    display: flex;
+    align-items: center;
+    gap: var(--bs-space-2);
+  }
+
+  .game__log-hit {
+    color: var(--bs-color-invalid);
+  }
+
+  .game__log-miss {
+    color: var(--bs-color-blue);
   }
 }

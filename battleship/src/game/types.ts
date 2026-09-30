@@ -34,11 +34,27 @@ export type FireOutcome =
 
 export type GamePhase = 'placement' | 'playing' | 'finished'
 
+export type Side = 'player' | 'enemy'
+
+/** One shot of the match. Cells the game marks as misses around a sunk ship are not shots. */
+export interface ShotRecord {
+  by: Side
+  x: number
+  y: number
+  result: ShotResult
+}
+
 export interface GameState {
   difficulty: Difficulty
   phase: GamePhase
   playerBoard: Board
   enemyBoard: Board
-  turn: 'player' | 'enemy'
-  winner: 'player' | 'enemy' | null
+  turn: Side
+  winner: Side | null
+  /** Every shot in order, both sides. */
+  shots: ShotRecord[]
+  /** Epoch ms. */
+  startedAt: number
+  /** Epoch ms, set when the match ends. */
+  finishedAt: number | null
 }

@@ -77,3 +77,14 @@ button.bs-menu-row {
     display: inline;
   }
 }
+
+.ui-topbar__heading {
+  margin: 0;
+}
+
+.result-art {
+  display: block;
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+}

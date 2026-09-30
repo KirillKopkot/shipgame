@@ -1,8 +1,10 @@
 import { BOARD_SIZE } from './board'
-import type { Board, Difficulty, GameState } from './types'
+import type { Board, Difficulty, GameState, ShotRecord } from './types'
 
 export const SAVE_KEY = 'battleship:game'
 export const SETTINGS_KEY = 'battleship:settings'
+/** Bump when the shape of GameState changes; saves of another version are discarded. */
+export const SAVE_VERSION = 1
 
 export interface Settings {
   music: boolean
@@ -24,29 +26,41 @@ function isBoard(value: unknown): value is Board {
   )
 }
 
-/** Parses a saved match. Returns null unless it is a valid match in progress. */
+function isShot(value: unknown): value is ShotRecord {
+  if (typeof value !== 'object' || value === null) return false
+  const s = value as Partial<ShotRecord>
+  return (
+    (s.by === 'player' || s.by === 'enemy') &&
+    typeof s.x === 'number' &&
+    typeof s.y === 'number' &&
+    (s.result === 'miss' || s.result === 'hit' || s.result === 'sunk')
+  )
+}
+
+function isPlayingGame(g: Partial<GameState> | undefined): g is GameState {
+  return (
+    !!g &&
+    g.phase === 'playing' &&
+    DIFFICULTIES.includes(g.difficulty as Difficulty) &&
+    (g.turn === 'player' || g.turn === 'enemy') &&
+    isBoard(g.playerBoard) &&
+    isBoard(g.enemyBoard) &&
+    Array.isArray(g.shots) &&
+    g.shots.every(isShot) &&
+    typeof g.startedAt === 'number'
+  )
+}
+
+/** Parses a saved match. Returns null unless it is a valid match in progress of the current version. */
 export function parseSavedGame(raw: string | null): GameState | null {
   if (!raw) return null
   try {
-    const g = JSON.parse(raw) as Partial<GameState>
-    if (
-      g.phase === 'playing' &&
-      DIFFICULTIES.includes(g.difficulty as Difficulty) &&
-      (g.turn === 'player' || g.turn === 'enemy') &&
-      isBoard(g.playerBoard) &&
-      isBoard(g.enemyBoard)
-    ) {
-      return g as GameState
-    }
+    const data = JSON.parse(raw) as { version?: unknown; game?: Partial<GameState> }
+    if (data.version === SAVE_VERSION && isPlayingGame(data.game)) return data.game
   } catch {
     // corrupted save: treat as no save
   }
   return null
-}
-
-/** Number of cells shot at on the board. */
-export function countShots(board: Board): number {
-  return board.cells.reduce((sum, row) => sum + row.filter((c) => c.state !== 'unknown').length, 0)
 }
 
 function read(key: string): string | null {
@@ -57,8 +71,38 @@ function read(key: string): string | null {
   }
 }
 
+function remove(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // storage unavailable
+  }
+}
+
+export function clearSavedGame(): void {
+  remove(SAVE_KEY)
+}
+
+/** Saves a match in progress; a finished match is not kept, its save is deleted. */
+export function saveGame(game: GameState): void {
+  if (game.phase !== 'playing') {
+    clearSavedGame()
+    return
+  }
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, game }))
+  } catch {
+    // storage unavailable or full: the match just won't survive a reload
+  }
+}
+
+/** Loads the saved match. Unreadable or other-version data is deleted. */
 export function loadSavedGame(): GameState | null {
-  return parseSavedGame(read(SAVE_KEY))
+  const raw = read(SAVE_KEY)
+  if (raw === null) return null
+  const game = parseSavedGame(raw)
+  if (!game) clearSavedGame()
+  return game
 }
 
 export function parseSettings(raw: string | null): Settings {

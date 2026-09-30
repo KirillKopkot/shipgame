@@ -2,7 +2,6 @@ import { Board } from '../components/Board'
 import { boardToCells } from '../components/cellView'
 import { Card } from '../components/Card'
 import { ChevronIcon, LogoMark, PeopleIcon, SunIcon, TargetIcon } from '../components/Icons'
-import { countShots } from '../game/storage'
 import type { GameState } from '../game/types'
 
 interface HomeScreenProps {
@@ -50,7 +49,7 @@ export function HomeScreen({
                 <span className="bs-eyebrow continue__eyebrow">Game in progress</span>
                 <span className="continue__title">Continue</span>
                 <span className="continue__meta">
-                  {capitalize(savedGame.difficulty)} · {countShots(savedGame.enemyBoard)} shots ·{' '}
+                  {capitalize(savedGame.difficulty)} · {savedGame.shots.filter((s) => s.by === 'player').length} shots ·{' '}
                   {savedGame.turn === 'player' ? 'Your turn' : 'Enemy turn'}
                 </span>
               </span>

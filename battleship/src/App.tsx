@@ -1,12 +1,15 @@
-import { useState } from 'react'
-import { loadSavedGame, loadSettings, saveSettings } from './game/storage'
+import { useCallback, useState } from 'react'
+import { createGame } from './game/match'
+import { loadSavedGame, loadSettings, saveGame, saveSettings } from './game/storage'
 import type { Settings } from './game/storage'
-import type { Board, Difficulty } from './game/types'
+import type { Difficulty, GameState } from './game/types'
 import { DifficultyScreen } from './screens/DifficultyScreen'
+import { GameScreen } from './screens/GameScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { MultiplayerScreen } from './screens/MultiplayerScreen'
 import { PlaceholderScreen } from './screens/PlaceholderScreen'
 import { PlacementScreen } from './screens/PlacementScreen'
+import { ResultScreen } from './screens/ResultScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { SignInScreen } from './screens/SignInScreen'
 import { StartScreen } from './screens/StartScreen'
@@ -29,9 +32,13 @@ function App() {
   const [isGuest, setIsGuest] = useState(true)
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [settings, setSettings] = useState<Settings>(loadSettings)
-  const [savedGame] = useState(loadSavedGame)
-  // The player's placed fleet, set by "Battle!" and read by the game screen.
-  const [playerFleet, setPlayerFleet] = useState<Board | null>(null)
+  // The current match: restored from localStorage, kept there while it is in progress.
+  const [game, setGame] = useState<GameState | null>(loadSavedGame)
+
+  const updateGame = useCallback((next: GameState) => {
+    setGame(next)
+    saveGame(next) // a finished match deletes its save
+  }, [])
 
   function go(next: Screen) {
     setHistory((h) => [...h, screen])
@@ -39,9 +46,9 @@ function App() {
   }
 
   /** Moves to a screen without keeping the current one in history (e.g. after leaving Start). */
-  function replace(next: Screen) {
+  const replace = useCallback((next: Screen) => {
     setScreen(next)
-  }
+  }, [])
 
   function back() {
     const previous = history[history.length - 1] ?? 'home'
@@ -49,16 +56,30 @@ function App() {
     setScreen(previous)
   }
 
+  function goHome() {
+    setHistory([])
+    setScreen('home')
+  }
+
   function playAsGuest() {
     setIsGuest(true)
-    setHistory([])
-    replace('home')
+    goHome()
   }
 
   function changeSettings(next: Settings) {
     setSettings(next)
     saveSettings(next)
   }
+
+  function rematch() {
+    if (!game) return goHome()
+    setDifficulty(game.difficulty)
+    setGame(null)
+    setHistory(['home', 'difficulty'])
+    setScreen('placement')
+  }
+
+  const finishGame = useCallback(() => replace('result'), [replace])
 
   switch (screen) {
     case 'start':
@@ -69,7 +90,7 @@ function App() {
       return (
         <HomeScreen
           isGuest={isGuest}
-          savedGame={savedGame}
+          savedGame={game?.phase === 'playing' ? game : null}
           onContinue={() => go('game')}
           onSinglePlayer={() => go('difficulty')}
           onMultiplayer={() => go('multiplayer')}
@@ -97,20 +118,25 @@ function App() {
           onBack={back}
           onSettings={() => go('settings')}
           onBattle={(fleet) => {
-            setPlayerFleet(fleet)
+            updateGame(createGame(fleet, difficulty))
             go('game')
           }}
         />
       )
     case 'game':
+      if (!game) return <PlaceholderScreen title="Game" onBack={goHome} />
       return (
-        <PlaceholderScreen
-          title={`Game · ${playerFleet?.ships.length ?? 0} ships placed`}
-          onBack={back}
+        <GameScreen
+          game={game}
+          onUpdate={updateGame}
+          onFinish={finishGame}
+          onBack={goHome}
+          onSettings={() => go('settings')}
         />
       )
     case 'result':
-      return <PlaceholderScreen title="Result" onBack={back} />
+      if (!game || game.phase !== 'finished') return <PlaceholderScreen title="Result" onBack={goHome} />
+      return <ResultScreen game={game} onRematch={rematch} onMenu={goHome} />
   }
 }
 

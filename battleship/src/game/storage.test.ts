@@ -1,50 +1,90 @@
-import { describe, expect, it } from 'vitest'
-import { createEmptyBoard } from './board'
-import { fire } from './shooting'
-import { countShots, parseSavedGame, parseSettings, DEFAULT_SETTINGS } from './storage'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { randomPlacement } from './board'
+import { createGame, playerShoot } from './match'
+import {
+  DEFAULT_SETTINGS,
+  SAVE_KEY,
+  SAVE_VERSION,
+  clearSavedGame,
+  loadSavedGame,
+  parseSavedGame,
+  parseSettings,
+  saveGame,
+} from './storage'
 import type { GameState } from './types'
 
-function sampleState(): GameState {
-  return {
-    difficulty: 'medium',
-    phase: 'playing',
-    playerBoard: createEmptyBoard(),
-    enemyBoard: createEmptyBoard(),
-    turn: 'player',
-    winner: null,
-  }
-}
+let store: Map<string, string>
 
-describe('parseSavedGame', () => {
-  it('returns null for missing or broken data', () => {
-    expect(parseSavedGame(null)).toBeNull()
-    expect(parseSavedGame('not json')).toBeNull()
-    expect(parseSavedGame('{}')).toBeNull()
-  })
-
-  it('restores a valid match in progress', () => {
-    const state = sampleState()
-    expect(parseSavedGame(JSON.stringify(state))).toEqual(state)
-  })
-
-  it('ignores finished matches', () => {
-    const state = { ...sampleState(), phase: 'finished' }
-    expect(parseSavedGame(JSON.stringify(state))).toBeNull()
+beforeEach(() => {
+  store = new Map()
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
   })
 })
 
-describe('countShots', () => {
-  it('counts shot cells only', () => {
-    let board = createEmptyBoard()
-    expect(countShots(board)).toBe(0)
-    for (const [x, y] of [
-      [0, 0],
-      [3, 4],
-    ]) {
-      const out = fire(board, x, y)
-      if (out.ok) board = out.board
-    }
-    expect(countShots(board)).toBe(2)
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+function playingGame(): GameState {
+  const g = createGame(randomPlacement(), 'medium', 1000)
+  const cell = g.enemyBoard.cells.flat().findIndex((c) => c.shipId !== null)
+  return playerShoot(g, cell % 10, Math.floor(cell / 10))
+}
+
+describe('saved game', () => {
+  it('saves after a move and loads the same state (including whose turn it is)', () => {
+    const g: GameState = { ...playingGame(), turn: 'enemy' }
+    saveGame(g)
+    expect(JSON.parse(store.get(SAVE_KEY)!).version).toBe(SAVE_VERSION)
+    expect(loadSavedGame()).toEqual(g)
+  })
+
+  it('returns null when nothing is saved', () => {
+    expect(loadSavedGame()).toBeNull()
+  })
+
+  it('resets the save when the version differs', () => {
+    store.set(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION + 1, game: playingGame() }))
+    expect(loadSavedGame()).toBeNull()
+    expect(store.has(SAVE_KEY)).toBe(false)
+  })
+
+  it('resets the save when there is no version (old format)', () => {
+    store.set(SAVE_KEY, JSON.stringify(playingGame()))
+    expect(loadSavedGame()).toBeNull()
+    expect(store.has(SAVE_KEY)).toBe(false)
+  })
+
+  it('resets the save when it is not valid JSON or has a broken shape', () => {
+    store.set(SAVE_KEY, 'not json')
+    expect(loadSavedGame()).toBeNull()
+    expect(store.has(SAVE_KEY)).toBe(false)
+
+    store.set(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, game: { phase: 'playing' } }))
+    expect(loadSavedGame()).toBeNull()
+    expect(store.has(SAVE_KEY)).toBe(false)
+  })
+
+  it('deletes the save when the match is finished', () => {
+    const g = playingGame()
+    saveGame(g)
+    expect(store.has(SAVE_KEY)).toBe(true)
+    saveGame({ ...g, phase: 'finished', winner: 'player', finishedAt: 2000 })
+    expect(store.has(SAVE_KEY)).toBe(false)
+  })
+
+  it('clearSavedGame removes the save', () => {
+    saveGame(playingGame())
+    clearSavedGame()
+    expect(loadSavedGame()).toBeNull()
+  })
+
+  it('parseSavedGame ignores finished matches', () => {
+    const finished = { ...playingGame(), phase: 'finished' }
+    expect(parseSavedGame(JSON.stringify({ version: SAVE_VERSION, game: finished }))).toBeNull()
   })
 })
 

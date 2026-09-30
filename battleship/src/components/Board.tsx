@@ -16,6 +16,8 @@ interface BoardProps {
   locked?: boolean
   /** Aimed cell, shown with the crosshair. */
   target?: BoardCell | null
+  /** Cells that just changed (a new shot): they play the appear animation, in this order. */
+  fresh?: BoardCell[]
   /** A cell was chosen: click, keyboard, or a finger lifted over it. */
   onCellClick?: (x: number, y: number) => void
   /**
@@ -31,7 +33,7 @@ function cellAt(clientX: number, clientY: number): BoardCell | null {
   return { x: Number(el.dataset.x), y: Number(el.dataset.y) }
 }
 
-export function Board({ cells, small, locked, target, onCellClick, onCellAim }: BoardProps) {
+export function Board({ cells, small, locked, target, fresh, onCellClick, onCellAim }: BoardProps) {
   // After a touch is committed on pointerup, the browser still sends a click on the cell
   // where the finger went down; ignore it.
   const ignoreClick = useRef(false)
@@ -81,10 +83,14 @@ export function Board({ cells, small, locked, target, onCellClick, onCellAim }: 
       onPointerCancel={handlePointer}
     >
       {cells.map((row, y) =>
-        row.map((state, x) => (
+        row.map((state, x) => {
+          const freshIndex = fresh?.findIndex((f) => f.x === x && f.y === y) ?? -1
+          return (
           <Cell
             key={`${x}-${y}`}
             state={state}
+            isNew={freshIndex >= 0}
+            index={freshIndex >= 0 ? freshIndex : undefined}
             target={target?.x === x && target?.y === y}
             label={small ? undefined : cellName(x, y)}
             coords={{ x, y }}
@@ -96,7 +102,8 @@ export function Board({ cells, small, locked, target, onCellClick, onCellAim }: 
                 : undefined
             }
           />
-        )),
+          )
+        }),
       )}
     </div>
   )
