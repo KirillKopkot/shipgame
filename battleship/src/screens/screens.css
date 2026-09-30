@@ -578,3 +578,34 @@
     color: var(--bs-color-blue);
   }
 }
+
+/* ---- Online rooms ---- */
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bs-space-2) var(--bs-space-3);
+}
+
+.waiting__code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bs-space-2);
+  padding: var(--bs-space-5) var(--bs-space-4);
+}
+
+.waiting__label {
+  margin: 0;
+}
+
+.waiting__letters {
+  margin: 0;
+  font-family: var(--bs-font-display);
+  font-size: var(--bs-text-3xl);
+  line-height: 1;
+  letter-spacing: 0.15em;
+  padding-left: 0.15em;
+  color: var(--bs-color-ink);
+  user-select: all;
+}

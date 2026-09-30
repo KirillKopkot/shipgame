@@ -76,7 +76,10 @@ export interface ShotStats {
 }
 
 /** The player's shooting statistics. */
-export function shotStats(state: GameState, now: number = Date.now()): ShotStats {
+export function shotStats(
+  state: Pick<GameState, 'shots' | 'startedAt' | 'finishedAt'>,
+  now: number = Date.now(),
+): ShotStats {
   const mine = state.shots.filter((s) => s.by === 'player')
   const hits = mine.filter((s) => s.result !== 'miss').length
   return {
@@ -88,7 +91,7 @@ export function shotStats(state: GameState, now: number = Date.now()): ShotStats
 }
 
 /** Turn number shown to the player: their shots so far plus the one they are about to make. */
-export function turnNumber(state: GameState): number {
+export function turnNumber(state: Pick<GameState, 'shots'>): number {
   return state.shots.filter((s) => s.by === 'player').length + 1
 }
 

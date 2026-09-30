@@ -1,12 +1,15 @@
-import { useCallback, useState } from 'react'
-import { createGame } from './game/match'
+import { useCallback, useEffect, useState } from 'react'
+import { createGame, shotStats } from './game/match'
 import { loadSavedGame, loadSettings, saveGame, saveSettings } from './game/storage'
 import type { Settings } from './game/storage'
 import type { Difficulty, GameState } from './game/types'
+import { parseRoomParam } from './multiplayer/roomCode'
+import { clearRoomCode, loadRoomCode } from './multiplayer/roomStorage'
 import { DifficultyScreen } from './screens/DifficultyScreen'
 import { GameScreen } from './screens/GameScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { MultiplayerScreen } from './screens/MultiplayerScreen'
+import { OnlineRoomScreen } from './screens/OnlineRoomScreen'
 import { PlaceholderScreen } from './screens/PlaceholderScreen'
 import { PlacementScreen } from './screens/PlacementScreen'
 import { ResultScreen } from './screens/ResultScreen'
@@ -24,9 +27,26 @@ export type Screen =
   | 'settings'
   | 'multiplayer'
   | 'signin'
+  | 'room'
+
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
+/** A `?room=CODE` link wins over the room remembered from the last visit. */
+function initialRoomCode(): string | null {
+  return parseRoomParam(location.search) ?? loadRoomCode()
+}
+
+function resultProps(game: GameState) {
+  const stats = shotStats(game)
+  return { won: game.winner === 'player', shots: stats.shots, accuracy: stats.accuracy, elapsedMs: stats.elapsedMs }
+}
 
 function App() {
-  const [screen, setScreen] = useState<Screen>('start')
+  // The online room to open at start (invite link or remembered room), or the room currently open.
+  const [roomCode, setRoomCode] = useState<string | null>(initialRoomCode)
+  const [screen, setScreen] = useState<Screen>(() => (roomCode ? 'room' : 'start'))
   // Screens we can go back to (top = previous screen).
   const [history, setHistory] = useState<Screen[]>([])
   const [isGuest, setIsGuest] = useState(true)
@@ -34,6 +54,11 @@ function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
   // The current match: restored from localStorage, kept there while it is in progress.
   const [game, setGame] = useState<GameState | null>(loadSavedGame)
+
+  // The invite link has been used; keep the address bar clean.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has('room')) window.history.replaceState(null, '', location.pathname)
+  }, [])
 
   const updateGame = useCallback((next: GameState) => {
     setGame(next)
@@ -59,6 +84,17 @@ function App() {
   function goHome() {
     setHistory([])
     setScreen('home')
+  }
+
+  function enterRoom(code: string) {
+    setRoomCode(code)
+    go('room')
+  }
+
+  function leaveRoom() {
+    clearRoomCode()
+    setRoomCode(null)
+    goHome()
   }
 
   function playAsGuest() {
@@ -110,14 +146,26 @@ function App() {
     case 'settings':
       return <SettingsScreen settings={settings} onChange={changeSettings} onBack={back} />
     case 'multiplayer':
-      return <MultiplayerScreen onBack={back} />
+      return <MultiplayerScreen onBack={back} onEnterRoom={enterRoom} />
+    case 'room':
+      if (!roomCode) return <PlaceholderScreen title="Multiplayer" onBack={goHome} />
+      return (
+        <OnlineRoomScreen
+          key={roomCode}
+          code={roomCode}
+          onExit={goHome}
+          onLeave={leaveRoom}
+          onSettings={() => go('settings')}
+        />
+      )
     case 'placement':
       return (
         <PlacementScreen
-          difficulty={difficulty}
+          chipLabel={capitalize(difficulty)}
+          deskChipLabel={`vs computer · ${difficulty}`}
           onBack={back}
           onSettings={() => go('settings')}
-          onBattle={(fleet) => {
+          onSubmit={(fleet) => {
             updateGame(createGame(fleet, difficulty))
             go('game')
           }}
@@ -136,7 +184,7 @@ function App() {
       )
     case 'result':
       if (!game || game.phase !== 'finished') return <PlaceholderScreen title="Result" onBack={goHome} />
-      return <ResultScreen game={game} onRematch={rematch} onMenu={goHome} />
+      return <ResultScreen {...resultProps(game)} onRematch={rematch} onMenu={goHome} />
   }
 }
 

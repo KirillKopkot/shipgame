@@ -1,13 +1,29 @@
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-if (!url || !anonKey) {
-  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY (see .env.example)')
+export class NotConfiguredError extends Error {
+  constructor() {
+    super('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY (see .env.example)')
+    this.name = 'NotConfiguredError'
+  }
 }
 
-export const supabase = createClient(url, anonKey)
+/** False when the Supabase env variables are missing; the UI shows a message instead of failing. */
+export function isConfigured(): boolean {
+  return Boolean(url && anonKey)
+}
+
+let client: SupabaseClient | null = null
+
+/** The client is created on first use, so a missing config never breaks single-player. */
+export function getSupabase(): SupabaseClient {
+  if (!url || !anonKey) throw new NotConfiguredError()
+  client ??= createClient(url, anonKey)
+  return client
+}
 
 let inFlight: Promise<string> | null = null
 
@@ -18,6 +34,7 @@ let inFlight: Promise<string> | null = null
  */
 export function ensureSession(): Promise<string> {
   inFlight ??= (async () => {
+    const supabase = getSupabase()
     const { data } = await supabase.auth.getSession()
     if (data.session) return data.session.user.id
 

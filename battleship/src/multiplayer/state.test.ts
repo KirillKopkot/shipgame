@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { FLEET, createEmptyBoard, placeShip, randomPlacement } from '../game/board'
 import type { Board } from '../game/types'
-import { boardFromShips, buildMatchState, resolveShot, shipsOfBoard } from './state'
-import type { Move } from './types'
+import {
+  boardFromShips,
+  buildMatchState,
+  canFire,
+  deriveRoomStep,
+  fleetFromRemaining,
+  matchTimes,
+  mergeMoves,
+  resolveShot,
+  shipsOfBoard,
+} from './state'
+import type { Move, Room } from './types'
 
 const ME = 'user-me'
 const OPP = 'user-opponent'
@@ -192,5 +202,102 @@ describe('buildMatchState: robustness', () => {
     expect(state.opponentView.remaining).toEqual([...FLEET])
     expect(state.pendingReport).toBeNull()
     expect(state.awaitingResult).toBeNull()
+  })
+})
+
+describe('buildMatchState: shots log and last shot', () => {
+  const myShips = shipsOfBoard(smallBoard())
+
+  it('logs resolved shots of both sides in order, using the replay for the opponent', () => {
+    const state = buildMatchState({
+      myShips,
+      myId: ME,
+      moves: [move(ME, 5, 5, 'miss'), move(OPP, 1, 0), move(ME, 6, 6)],
+    })
+    expect(state.shots).toEqual([
+      { by: 'player', x: 5, y: 5, result: 'miss' },
+      { by: 'enemy', x: 1, y: 0, result: 'hit' },
+    ])
+  })
+
+  it('last shot carries the whole ship when it sank', () => {
+    const sunk = buildMatchState({
+      myShips,
+      myId: ME,
+      moves: [move(ME, 2, 2, 'hit'), move(ME, 3, 2, 'sunk', [{ x: 2, y: 2 }, { x: 3, y: 2 }])],
+    })
+    expect(sunk.last).toEqual({ by: 'player', cells: [{ x: 2, y: 2 }, { x: 3, y: 2 }] })
+
+    const mine = buildMatchState({ myShips, myId: ME, moves: [move(OPP, 8, 8)] })
+    expect(mine.last).toEqual({ by: 'enemy', cells: [{ x: 8, y: 8 }] })
+    expect(buildMatchState({ myShips, myId: ME, moves: [] }).last).toBeNull()
+  })
+})
+
+describe('fleetFromRemaining', () => {
+  it('marks ships that are no longer remaining as sunk', () => {
+    const status = fleetFromRemaining([4, 3, 2, 2, 1, 1, 1, 1])
+    expect(status.ships).toHaveLength(FLEET.length)
+    expect(status.left).toBe(8)
+    expect(status.ships.filter((s) => s.sunk).map((s) => s.size).sort()).toEqual([2, 3])
+  })
+
+  it('a full fleet has nothing sunk, an empty one everything', () => {
+    expect(fleetFromRemaining([...FLEET]).left).toBe(FLEET.length)
+    expect(fleetFromRemaining([]).left).toBe(0)
+  })
+})
+
+describe('mergeMoves', () => {
+  it('adds new moves in id order and replaces a pending row with its result', () => {
+    const pending = { ...move(OPP, 1, 1), id: 10 }
+    const resolved = { ...pending, result: 'hit' as const }
+    const merged = mergeMoves([pending], [resolved, { ...move(ME, 2, 2), id: 5 }])
+    expect(merged.map((m) => m.id)).toEqual([5, 10])
+    expect(merged[1].result).toBe('hit')
+  })
+
+  it('never replaces a resolved row with a late unresolved copy', () => {
+    const resolved = { ...move(OPP, 1, 1, 'miss'), id: 10 }
+    const late = { ...resolved, result: null }
+    expect(mergeMoves([resolved], late)[0].result).toBe('miss')
+  })
+})
+
+describe('matchTimes', () => {
+  const at = (id: number, iso: string): Move => ({ ...move(ME, id, 0, 'miss'), id, created_at: iso })
+
+  it('runs from the first move to the last one once finished', () => {
+    const moves = [at(1, '2026-01-01T10:00:00Z'), at(2, '2026-01-01T10:06:12Z')]
+    expect(matchTimes(moves, true, 0)).toEqual({
+      startedAt: Date.parse('2026-01-01T10:00:00Z'),
+      finishedAt: Date.parse('2026-01-01T10:06:12Z'),
+    })
+    expect(matchTimes(moves, false, 0).finishedAt).toBeNull()
+  })
+
+  it('falls back to now without moves', () => {
+    expect(matchTimes([], false, 123)).toEqual({ startedAt: 123, finishedAt: null })
+  })
+})
+
+describe('room step and firing', () => {
+  const room = (status: Room['status'], turn: string | null = null): Pick<Room, 'status' | 'turn'> => ({ status, turn })
+
+  it('maps room state to the view to show', () => {
+    expect(deriveRoomStep(room('waiting'), false)).toBe('waiting')
+    expect(deriveRoomStep(room('placing'), false)).toBe('placing')
+    expect(deriveRoomStep(room('placing'), true)).toBe('waiting-ready')
+    expect(deriveRoomStep(room('playing'), true)).toBe('playing')
+    expect(deriveRoomStep(room('finished'), true)).toBe('finished')
+  })
+
+  it('may fire only in a running match, on my turn, with no shot awaiting its result', () => {
+    const idle = { awaitingResult: null }
+    expect(canFire(room('playing', ME), ME, idle)).toBe(true)
+    expect(canFire(room('playing', OPP), ME, idle)).toBe(false)
+    expect(canFire(room('placing', ME), ME, idle)).toBe(false)
+    expect(canFire(room('finished', ME), ME, idle)).toBe(false)
+    expect(canFire(room('playing', ME), ME, { awaitingResult: move(ME, 0, 0) })).toBe(false)
   })
 })

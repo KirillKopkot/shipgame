@@ -1,19 +1,20 @@
 import { Button } from '../components/Button'
 import { DefeatArt, VictoryArt } from '../components/ResultArt'
 import { FLEET } from '../game/board'
-import { formatDuration, shotStats } from '../game/match'
-import type { GameState } from '../game/types'
+import { formatDuration } from '../game/match'
 
 interface ResultScreenProps {
-  game: GameState
-  onRematch: () => void
+  won: boolean
+  shots: number
+  /** Whole percent. */
+  accuracy: number
+  elapsedMs: number
+  /** Without it there is no Rematch button (online matches). */
+  onRematch?: () => void
   onMenu: () => void
 }
 
-export function ResultScreen({ game, onRematch, onMenu }: ResultScreenProps) {
-  const won = game.winner === 'player'
-  const stats = shotStats(game)
-
+export function ResultScreen({ won, shots, accuracy, elapsedMs, onRematch, onMenu }: ResultScreenProps) {
   return (
     <main className="bs-screen screen result">
       <div className="result__hero">
@@ -31,23 +32,25 @@ export function ResultScreen({ game, onRematch, onMenu }: ResultScreenProps) {
 
       <div className="result__stats">
         <div className="bs-stat">
-          <b>{stats.shots}</b>
+          <b>{shots}</b>
           <span>Shots</span>
         </div>
         <div className="bs-stat">
-          <b>{stats.accuracy}%</b>
+          <b>{accuracy}%</b>
           <span>Accuracy</span>
         </div>
         <div className="bs-stat">
-          <b>{formatDuration(stats.elapsedMs)}</b>
+          <b>{formatDuration(elapsedMs)}</b>
           <span>Time</span>
         </div>
       </div>
 
       <div className="screen__actions result__actions">
-        <Button variant="primary" onClick={onRematch}>
-          Rematch
-        </Button>
+        {onRematch && (
+          <Button variant="primary" onClick={onRematch}>
+            Rematch
+          </Button>
+        )}
         <Button variant="secondary" onClick={onMenu}>
           Main menu
         </Button>

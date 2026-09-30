@@ -8,13 +8,22 @@ import { BackIcon, LogoMark, SunIcon } from '../components/Icons'
 import { ShipChip } from '../components/ShipChip'
 import { createEmptyBoard, placeShip, randomPlacement, removeShip } from '../game/board'
 import { isFleetComplete, previewShip, remainingBySize, shipIdAt } from '../game/placement'
-import type { Board as GameBoard, Difficulty, Orientation } from '../game/types'
+import type { Board as GameBoard, Orientation } from '../game/types'
 
 interface PlacementScreenProps {
-  difficulty: Difficulty
+  /** Chip next to the title on phones, e.g. "Medium". */
+  chipLabel: string
+  /** Chip in the desktop header, e.g. "vs computer · medium". */
+  deskChipLabel: string
+  /** Text of the confirm button (default "Battle!"). */
+  submitLabel?: string
+  /** Disables the confirm button while something is being saved. */
+  busy?: boolean
+  /** A problem to show instead of the usual hint (e.g. saving failed). */
+  error?: string | null
   onBack: () => void
   onSettings: () => void
-  onBattle: (fleet: GameBoard) => void
+  onSubmit: (fleet: GameBoard) => void
 }
 
 const KINDS = [
@@ -29,11 +38,16 @@ function nextSize(left: Record<number, number>): number | null {
   return KINDS.find((k) => left[k.size] > 0)?.size ?? null
 }
 
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1)
-}
-
-export function PlacementScreen({ difficulty, onBack, onSettings, onBattle }: PlacementScreenProps) {
+export function PlacementScreen({
+  chipLabel,
+  deskChipLabel,
+  submitLabel = 'Battle!',
+  busy = false,
+  error = null,
+  onBack,
+  onSettings,
+  onSubmit,
+}: PlacementScreenProps) {
   const [board, setBoard] = useState<GameBoard>(createEmptyBoard)
   const [selected, setSelected] = useState<number | null>(4)
   const [orientation, setOrientation] = useState<Orientation>('horizontal')
@@ -102,7 +116,9 @@ export function PlacementScreen({ difficulty, onBack, onSettings, onBattle }: Pl
   )
 
   let hint
-  if (failed || (preview && !preview.valid)) {
+  if (error) {
+    hint = <Hint tone="bad">{error}</Hint>
+  } else if (failed || (preview && !preview.valid)) {
     hint = <Hint tone="bad">Ships can’t touch or overlap.</Hint>
   } else if (selectedKind) {
     hint = (
@@ -111,7 +127,7 @@ export function PlacementScreen({ difficulty, onBack, onSettings, onBattle }: Pl
       </Hint>
     )
   } else if (complete) {
-    hint = <Hint tone="ok">Fleet ready. Press Battle!</Hint>
+    hint = <Hint tone="ok">Fleet ready. Press {submitLabel}</Hint>
   } else {
     hint = <Hint tone="ok">Pick a ship from the list.</Hint>
   }
@@ -123,12 +139,12 @@ export function PlacementScreen({ difficulty, onBack, onSettings, onBattle }: Pl
           <BackIcon />
         </IconButton>
         <h1 className="bs-h1 placement__title">Place your fleet</h1>
-        <span className="bs-chip">{capitalize(difficulty)}</span>
+        <span className="bs-chip">{chipLabel}</span>
       </header>
       <header className="placement__desk-bar">
         <LogoMark />
         <span className="home__brand">Salvo</span>
-        <span className="bs-chip placement__desk-chip">vs computer · {difficulty}</span>
+        <span className="bs-chip placement__desk-chip">{deskChipLabel}</span>
         <IconButton label="Settings" onClick={onSettings}>
           <SunIcon />
         </IconButton>
@@ -173,11 +189,11 @@ export function PlacementScreen({ difficulty, onBack, onSettings, onBattle }: Pl
         </div>
         <div className="placement__battle">
           <Button
-            variant={complete ? 'primary' : 'disabled'}
+            variant={complete && !busy ? 'primary' : 'disabled'}
             size="lg"
-            onClick={() => onBattle(board)}
+            onClick={() => onSubmit(board)}
           >
-            Battle!
+            {submitLabel}
           </Button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { toPublicView } from '../game/bot'
+import type { PublicCell } from '../game/bot'
 import type { Board } from '../game/types'
 import type { CellView } from './Cell'
 
@@ -27,4 +28,9 @@ export function boardToCells(board: Board, showShips: boolean): CellView[][] {
 export function cellsFromPattern(rows: readonly string[]): CellView[][] {
   const byChar: Record<string, CellView> = { '.': 'empty', o: 'miss', x: 'hit', s: 'sunk', '#': 'ship' }
   return rows.map((row) => Array.from(row, (ch) => byChar[ch] ?? 'empty'))
+}
+
+/** Maps what a player knows about the opponent's board (hit/miss/sunk/unknown) to cells. */
+export function publicViewToCells(cells: PublicCell[][]): CellView[][] {
+  return cells.map((row) => row.map((c): CellView => (c === 'unknown' ? 'empty' : c)))
 }
